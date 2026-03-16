@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>phishPhinger</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      min-width: 420px;
+      max-width: 500px;
+      background: #fff;
+      color: #1a202c;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: #e53e3e;
+      color: #fff;
+    }
+
+    header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    header .subtitle {
+      font-size: 11px;
+      opacity: 0.85;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f7fafc;
+    }
+
+    .controls label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #4a5568;
+    }
+
+    .controls input[type="checkbox"] {
+      cursor: pointer;
+    }
+
+    #clearBtn {
+      font-size: 12px;
+      padding: 3px 10px;
+      border: 1px solid #cbd5e0;
+      border-radius: 4px;
+      background: #fff;
+      color: #4a5568;
+      cursor: pointer;
+    }
+
+    #clearBtn:hover {
+      background: #fed7d7;
+      border-color: #e53e3e;
+      color: #c53030;
+    }
+
+    .empty {
+      padding: 28px 14px;
+      text-align: center;
+      color: #718096;
+      font-size: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      padding: 6px 10px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: #718096;
+      border-bottom: 2px solid #e2e8f0;
+      background: #f7fafc;
+    }
+
+    tbody tr:nth-child(even) { background: #f7fafc; }
+
+    tbody td {
+      padding: 6px 10px;
+      font-size: 12px;
+      border-bottom: 1px solid #edf2f7;
+      vertical-align: top;
+      word-break: break-all;
+    }
+
+    .hostname { font-weight: 600; color: #c53030; }
+    .resembles { color: #2b6cb0; }
+
+    .reason-badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: #fed7d7;
+      color: #c53030;
+      white-space: nowrap;
+    }
+
+    .time { color: #a0aec0; font-size: 11px; white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>phishPhinger</h1>
+      <div class="subtitle">Suspicious domain detector</div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <label>
+      <input type="checkbox" id="mainFrameOnly">
+      Main-frame only (ignore sub-resources)
+    </label>
+    <button id="clearBtn">Clear</button>
+  </div>
+
+  <div id="content">
+    <div class="empty">No suspicious domains detected yet.</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
