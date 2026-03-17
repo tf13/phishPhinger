@@ -33,6 +33,7 @@ const {
   normalizeLeet,
   normalizeHomograph,
   levenshtein,
+  editThreshold,
   classifyDomain,
 } = require('../extension/similarity.js');
 
@@ -145,6 +146,115 @@ assertHit('typosquat: amazom.com (n->m)',           'amazom.com');
 assertHit('leet: app1e.com',                       'app1e.com');
 assertHit('leet: g00gle.com',                      'g00gle.com');
 assertHit('homograph: Cyrillic а in apple',        '\u0430pple.com');
+
+// ---------------------------------------------------------------------------
+// getSLD
+// ---------------------------------------------------------------------------
+
+console.log('\ngetSLD');
+assert('apple.com -> apple',         getSLD('apple.com'),         'apple');
+assert('cdn-apple.com -> cdn-apple', getSLD('cdn-apple.com'),     'cdn-apple');
+assert('google.net -> google',       getSLD('google.net'),        'google');
+assert('bar.co.uk -> bar',           getSLD('bar.co.uk'),         'bar');
+assert('foo.example.co.uk -> foo',   getSLD('foo.example.co.uk'), 'foo');
+
+// ---------------------------------------------------------------------------
+// editThreshold
+// ---------------------------------------------------------------------------
+console.log('\neditThreshold');
+assert('length 1 -> 1',  editThreshold('a'),          1);
+assert('length 4 -> 1',  editThreshold('bing'),        1);
+assert('length 5 -> 2',  editThreshold('yahoo'),       2);
+assert('length 8 -> 2',  editThreshold('linkedin'),    2);
+assert('length 9 -> 3',  editThreshold('instagram'),   3);
+assert('length 13 -> 3', editThreshold('stackoverflow'), 3);
+
+// ---------------------------------------------------------------------------
+// normalizeLeet (extended)
+// ---------------------------------------------------------------------------
+console.log('\nnormalizeLeet (extended)');
+assert('3 -> e',            normalizeLeet('3mail'),      'email');
+assert('4 -> a',            normalizeLeet('4mazon'),     'amazon');
+assert('5 -> s',            normalizeLeet('5ecure'),     'secure');
+assert('6 -> g',            normalizeLeet('6oogle'),     'google');
+assert('7 -> t',            normalizeLeet('7witter'),    'twitter');
+assert('8 -> b',            normalizeLeet('8ing'),       'bing');
+assert('@ -> a',            normalizeLeet('@pple'),      'apple');
+assert('empty string',      normalizeLeet(''),           '');
+assert('no leet chars',     normalizeLeet('apple'),      'apple');
+assert('2 stays as 2',      normalizeLeet('2fast'),      '2fast');
+assert('all substitutions', normalizeLeet('4pp13'),      'apple');
+
+// ---------------------------------------------------------------------------
+// normalizeHomograph (extended)
+// ---------------------------------------------------------------------------
+console.log('\nnormalizeHomograph (extended)');
+assert('Cyrillic е -> e', normalizeHomograph('\u0435'),  'e');
+assert('Cyrillic о -> o', normalizeHomograph('\u043e'),  'o');
+assert('Cyrillic р -> p', normalizeHomograph('\u0440'),  'p');
+assert('Cyrillic с -> c', normalizeHomograph('\u0441'),  'c');
+assert('Cyrillic х -> x', normalizeHomograph('\u0445'),  'x');
+assert('Cyrillic і -> i', normalizeHomograph('\u0456'),  'i');
+assert('Greek α -> a',    normalizeHomograph('\u03b1'),  'a');
+assert('Greek ρ -> p',    normalizeHomograph('\u03c1'),  'p');
+assert('Greek ν -> v',    normalizeHomograph('\u03bd'),  'v');
+assert('Greek τ -> t',    normalizeHomograph('\u03c4'),  't');
+assert('Greek ε -> e',    normalizeHomograph('\u03b5'),  'e');
+assert('Greek κ -> k',    normalizeHomograph('\u03ba'),  'k');
+assert('Greek ι -> i',    normalizeHomograph('\u03b9'),  'i');
+assert('empty string',    normalizeHomograph(''),        '');
+assert('plain ASCII unchanged', normalizeHomograph('google'), 'google');
+// Combined Cyrillic + Greek in one string
+assert('Cyrillic+Greek combo',
+  normalizeHomograph('\u0430\u03bf'),  // Cyrillic а + Greek ο
+  'ao');
+
+// ---------------------------------------------------------------------------
+// levenshtein (extended)
+// ---------------------------------------------------------------------------
+console.log('\nlevenshtein (extended)');
+assert('both empty -> 0',        levenshtein('', ''),         0);
+assert('symmetric a,b == b,a',   levenshtein('kitten', 'sitting') === levenshtein('sitting', 'kitten'), true);
+assert('full replacement',        levenshtein('abc', 'xyz'),   3);
+assert('two-char strings',        levenshtein('ab', 'ba'),     2);
+assert('longer word',             levenshtein('kitten', 'sitting'), 3);
+
+// ---------------------------------------------------------------------------
+// getRegisteredDomain (extended)
+// ---------------------------------------------------------------------------
+console.log('\ngetRegisteredDomain (extended)');
+assert('com.au two-part TLD',     getRegisteredDomain('shop.example.com.au'),  'example.com.au');
+assert('com.br two-part TLD',     getRegisteredDomain('www.banco.com.br'),     'banco.com.br');
+assert('com.cn two-part TLD',     getRegisteredDomain('www.foo.com.cn'),       'foo.com.cn');
+assert('uppercase lowercased',    getRegisteredDomain('WWW.APPLE.COM'),        'apple.com');
+assert('single-label .io TLD',    getRegisteredDomain('api.github.io'),        'github.io');
+
+// ---------------------------------------------------------------------------
+// classifyDomain (extended)
+// ---------------------------------------------------------------------------
+console.log('\nclassifyDomain (extended)');
+assert('no dot returns null',   classifyDomain('localhost'), null);
+assert('empty string -> null',  classifyDomain(''),          null);
+assert('null -> null',          classifyDomain(null),        null);
+
+// Verify exact reason values
+const brandHit    = classifyDomain('audit-apple.com');
+const tldHit      = classifyDomain('apple.net');
+const typosquat   = classifyDomain('appple.com');
+assert('brand-substring reason field',  brandHit  && brandHit.reason,   'brand-substring');
+assert('tld-swap reason field',         tldHit    && tldHit.reason,     'tld-swap');
+assert('typosquat reason field',        typosquat && typosquat.reason,  'typosquat');
+assert('resembles is a string (brand)', brandHit  && typeof brandHit.resembles,  'string');
+assert('resembles is a string (tld)',   tldHit    && typeof tldHit.resembles,    'string');
+
+// Combined leet + homograph should still be flagged
+assertHit('leet+homograph: g\u03bf\u03bfgle.com',  'g\u03bf\u03bfgle.com');
+assertHit('leet+homograph: \u04304pp13.com',       '\u04304pp13.com');
+
+// Legitimate subdomains of various brands stay safe
+assertSafe('subdomain: pay.amazon.com',     'pay.amazon.com');
+assertSafe('subdomain: ads.twitter.com',    'ads.twitter.com');
+assertSafe('exact match: youtube.com',      'youtube.com');
 
 // ---------------------------------------------------------------------------
 // Summary
