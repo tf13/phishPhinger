@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "phishPhinger",
+  "version": "0.1.0",
+  "description": "Alerts you to domains that resemble well-known trusted sites — possible phishing indicators.",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "128": "icons/icon-128.png"
+    }
+  },
+  "permissions": [
+    "webRequest",
+    "notifications",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "phishphinger@local",
+      "strict_min_version": "109.0"
+    }
+  }
+}
