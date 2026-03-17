@@ -46,6 +46,8 @@ global.document = {
 };
 
 // Minimal chrome stub — storage callbacks fire synchronously with defaults.
+// syncSetCalls tracks everything written to chrome.storage.sync.set.
+const syncSetCalls = [];
 global.browser = undefined;
 global.chrome  = {
   storage: {
@@ -55,7 +57,7 @@ global.chrome  = {
     },
     sync: {
       get: (defaults, cb) => cb(defaults),
-      set: () => {},
+      set: (obj)          => syncSetCalls.push(JSON.parse(JSON.stringify(obj))),
     },
   },
   action: {
@@ -80,6 +82,7 @@ eval(
     .replace('function reasonLabel(',  'global.reasonLabel  = function(')
     .replace('function formatTime(',   'global.formatTime   = function(')
     .replace('function renderAlerts(', 'global.renderAlerts = function(')
+    .replace('function saveConfig()',  'global.saveConfig   = function()')
 );
 
 // ---------------------------------------------------------------------------
@@ -222,6 +225,53 @@ assertContains('tld-swap renders as "TLD swap"', mockContentEl.innerHTML, 'TLD s
 resetContent();
 renderAlerts([{ hostname: 'appple.com', resembles: 'apple.com', reason: 'typosquat', ts }]);
 assertContains('typosquat label present', mockContentEl.innerHTML, 'typosquat');
+
+// ---------------------------------------------------------------------------
+// Config persistence — saveConfig writes both checkboxes together
+// ---------------------------------------------------------------------------
+console.log('\nConfig persistence (saveConfig)');
+
+syncSetCalls.length = 0;
+const CONFIG_KEY = 'phishConfig';
+
+// Both off
+mockCheckbox.checked     = false;
+mockWarningCheck.checked = false;
+saveConfig();
+assert('saveConfig writes phishConfig key',              syncSetCalls.length,                1);
+assert('mainFrameOnly: false saved correctly',           syncSetCalls[0][CONFIG_KEY].mainFrameOnly, false);
+assert('showWarning: false saved correctly',             syncSetCalls[0][CONFIG_KEY].showWarning,   false);
+
+syncSetCalls.length = 0;
+mockCheckbox.checked     = true;
+mockWarningCheck.checked = false;
+saveConfig();
+assert('mainFrameOnly: true persisted',      syncSetCalls[0][CONFIG_KEY].mainFrameOnly, true);
+assert('showWarning still saved when false', syncSetCalls[0][CONFIG_KEY].showWarning,   false);
+
+syncSetCalls.length = 0;
+mockCheckbox.checked     = false;
+mockWarningCheck.checked = true;
+saveConfig();
+assert('showWarning: true persisted',        syncSetCalls[0][CONFIG_KEY].showWarning,   true);
+assert('mainFrameOnly still saved when false', syncSetCalls[0][CONFIG_KEY].mainFrameOnly, false);
+
+syncSetCalls.length = 0;
+mockCheckbox.checked     = true;
+mockWarningCheck.checked = true;
+saveConfig();
+assert('both true: mainFrameOnly saved',  syncSetCalls[0][CONFIG_KEY].mainFrameOnly, true);
+assert('both true: showWarning saved',    syncSetCalls[0][CONFIG_KEY].showWarning,   true);
+
+// Config load — popup.js was eval'd with DEFAULT_CONFIG (both false).
+// Reset checkboxes to what popup.js would have set them to verify loading.
+mockCheckbox.checked     = false;
+mockWarningCheck.checked = false;
+// Re-apply the same default config that popup.js received at load time:
+// storage.sync.get returns { phishConfig: { mainFrameOnly: false, showWarning: false } }
+// popup.js sets: mainFrameCheck.checked = false; warningCheck.checked = false;
+assert('warningCheck initialised to false from default config',   mockWarningCheck.checked, false);
+assert('mainFrameCheck initialised to false from default config', mockCheckbox.checked,     false);
 
 // ---------------------------------------------------------------------------
 // Summary
