@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suspicious Domain — phishPhinger</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #fff5f5;
+      color: #1a202c;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #fff;
+      border: 2px solid #fc8181;
+      border-radius: 10px;
+      max-width: 560px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(229, 62, 62, 0.12);
+    }
+
+    .card-header {
+      background: #e53e3e;
+      color: #fff;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .card-header .icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .card-header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .card-header .source {
+      font-size: 12px;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    .domain-box {
+      background: #fff5f5;
+      border: 1px solid #fc8181;
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      word-break: break-all;
+    }
+
+    .domain-box .label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #718096;
+      margin-bottom: 4px;
+    }
+
+    .domain-box .hostname {
+      font-size: 20px;
+      font-weight: 700;
+      color: #c53030;
+    }
+
+    .detail-row {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: #4a5568;
+    }
+
+    .detail-row .detail-label {
+      font-weight: 600;
+      color: #2d3748;
+      min-width: 90px;
+    }
+
+    .resembles-value {
+      color: #2b6cb0;
+      font-weight: 600;
+    }
+
+    .reason-badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      background: #fed7d7;
+      color: #c53030;
+      font-weight: 600;
+    }
+
+    .hint {
+      margin-top: 18px;
+      font-size: 13px;
+      color: #718096;
+      line-height: 1.5;
+    }
+
+    .card-footer {
+      padding: 16px 24px 20px;
+      border-top: 1px solid #edf2f7;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    button {
+      font-size: 14px;
+      font-weight: 600;
+      padding: 9px 20px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s;
+    }
+
+    #goBackBtn {
+      background: #e53e3e;
+      color: #fff;
+    }
+
+    #goBackBtn:hover,
+    #goBackBtn:focus {
+      background: #c53030;
+      outline: none;
+    }
+
+    #proceedBtn {
+      background: #edf2f7;
+      color: #4a5568;
+      border: 1px solid #cbd5e0;
+    }
+
+    #proceedBtn:hover,
+    #proceedBtn:focus {
+      background: #e2e8f0;
+      outline: none;
+    }
+
+    .kbd-hint {
+      font-size: 11px;
+      color: #a0aec0;
+      text-align: center;
+      padding: 0 24px 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <div class="icon">⚠️</div>
+      <div>
+        <h1>Suspicious Domain Warning</h1>
+        <div class="source">phishPhinger detected a possible phishing attempt</div>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="domain-box">
+        <div class="label">Requested domain</div>
+        <div class="hostname" id="hostnameEl">—</div>
+      </div>
+
+      <div class="detail-row">
+        <span class="detail-label">Resembles</span>
+        <span class="resembles-value" id="resemblesEl">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Detection</span>
+        <span class="reason-badge" id="reasonEl">—</span>
+      </div>
+
+      <p class="hint">
+        This domain was not found in the Cloudflare Radar top-100 trusted list but
+        closely matches a well-known brand. It may be impersonating a legitimate site
+        to steal credentials or install malware.
+      </p>
+    </div>
+
+    <div class="card-footer">
+      <button id="proceedBtn">Proceed anyway</button>
+      <button id="goBackBtn">Go back</button>
+    </div>
+    <div class="kbd-hint">Press <kbd>Escape</kbd> to go back</div>
+  </div>
+
+  <script src="warning.js"></script>
+</body>
+</html>

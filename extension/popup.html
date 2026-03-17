@@ -45,6 +45,12 @@
       background: #f7fafc;
     }
 
+    .controls-toggles {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
     .controls label {
       display: flex;
       align-items: center;
@@ -133,10 +139,16 @@
   </header>
 
   <div class="controls">
-    <label>
-      <input type="checkbox" id="mainFrameOnly">
-      Main-frame only (ignore sub-resources)
-    </label>
+    <div class="controls-toggles">
+      <label>
+        <input type="checkbox" id="mainFrameOnly">
+        Main-frame only (ignore sub-resources)
+      </label>
+      <label>
+        <input type="checkbox" id="showWarning">
+        Show blocking warning before suspect pages load
+      </label>
+    </div>
     <button id="clearBtn">Clear</button>
   </div>
 

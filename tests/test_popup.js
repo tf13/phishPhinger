@@ -32,12 +32,14 @@ function makeElement(id) {
 
 const mockContentEl   = makeElement('content');
 const mockCheckbox    = makeElement('mainFrameOnly');
+const mockWarningCheck = makeElement('showWarning');
 const mockClearBtn    = makeElement('clearBtn');
 
 global.document = {
   getElementById(id) {
     if (id === 'content')       return mockContentEl;
     if (id === 'mainFrameOnly') return mockCheckbox;
+    if (id === 'showWarning')   return mockWarningCheck;
     if (id === 'clearBtn')      return mockClearBtn;
     return null;
   },

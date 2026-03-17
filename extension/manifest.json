@@ -15,7 +15,8 @@
   "permissions": [
     "webRequest",
     "notifications",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"

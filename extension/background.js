@@ -17,33 +17,43 @@ const CONFIG_KEY = 'phishConfig';
 const MAX_ALERTS = 200;
 
 /** Default configuration. */
-const DEFAULT_CONFIG = { mainFrameOnly: false };
+const DEFAULT_CONFIG = { mainFrameOnly: false, showWarning: false };
 
 /** In-memory config cache — updated whenever storage changes. */
 let config = { ...DEFAULT_CONFIG };
 
-/** Per-session hostname deduplication set — avoids repeated alerts for the
- *  same host within a browsing session. */
+/** Per-session hostname deduplication set — avoids repeated badge/notification
+ *  for the same host within a browsing session. */
 const seen = new Set();
+
+/** Hostnames the user has chosen to proceed past the warning this session. */
+const bypassed = new Set();
 
 // ---------------------------------------------------------------------------
 // Initialise config from storage
 // ---------------------------------------------------------------------------
 browserAPI.storage.sync.get({ [CONFIG_KEY]: DEFAULT_CONFIG }, result => {
-  config = result[CONFIG_KEY];
+  config = { ...DEFAULT_CONFIG, ...result[CONFIG_KEY] };
 });
 
 browserAPI.storage.sync.onChanged.addListener(changes => {
   if (changes[CONFIG_KEY]) {
-    config = changes[CONFIG_KEY].newValue;
+    config = { ...DEFAULT_CONFIG, ...changes[CONFIG_KEY].newValue };
   }
+});
+
+// ---------------------------------------------------------------------------
+// Message listener — warning page sends { type: 'bypass', hostname }
+// ---------------------------------------------------------------------------
+browserAPI.runtime.onMessage.addListener(({ type, hostname }) => {
+  if (type === 'bypass' && hostname) bypassed.add(hostname);
 });
 
 // ---------------------------------------------------------------------------
 // Web request listener
 // ---------------------------------------------------------------------------
 browserAPI.webRequest.onBeforeRequest.addListener(
-  ({ url, type }) => {
+  ({ url, type, tabId }) => {
     try {
       // Honour "main-frame only" setting
       if (config.mainFrameOnly && type !== 'main_frame') return;
@@ -51,12 +61,30 @@ browserAPI.webRequest.onBeforeRequest.addListener(
       const hostname = new URL(url).hostname;
       if (!hostname) return;
 
-      // Deduplicate within this session
+      // Already processed this session — skip silently
       if (seen.has(hostname)) return;
-      seen.add(hostname);
 
       const hit = classifyDomain(hostname);
       if (!hit) return;
+
+      // -----------------------------------------------------------------------
+      // Blocking warning popup (main-frame navigations only, not already bypassed)
+      // -----------------------------------------------------------------------
+      if (config.showWarning && type === 'main_frame' && tabId > 0 && !bypassed.has(hostname)) {
+        const warningUrl = browserAPI.runtime.getURL(
+          `warning.html?hostname=${encodeURIComponent(hostname)}` +
+          `&resembles=${encodeURIComponent(hit.resembles)}` +
+          `&reason=${encodeURIComponent(hit.reason)}` +
+          `&url=${encodeURIComponent(url)}`
+        );
+        browserAPI.tabs.update(tabId, { url: warningUrl });
+        // Don't add to `seen` here — if the user goes back and retries,
+        // they should see the warning again.
+        return;
+      }
+
+      // Mark seen before async work so duplicate events don't race
+      seen.add(hostname);
 
       // -----------------------------------------------------------------------
       // Persist alert to local storage

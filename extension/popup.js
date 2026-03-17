@@ -1,8 +1,8 @@
 /**
  * popup.js — phishPhinger extension popup controller.
  *
- * Reads alert history from chrome.storage.local and the "main-frame only"
- * config toggle from chrome.storage.sync.  Updates both on user interaction.
+ * Reads alert history from chrome.storage.local and config toggles from
+ * chrome.storage.sync.  Updates both on user interaction.
  */
 
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
@@ -11,8 +11,11 @@ const ALERT_KEY  = 'phishAlerts';
 const CONFIG_KEY = 'phishConfig';
 const MAX_DISPLAY = 20;
 
+const DEFAULT_CONFIG = { mainFrameOnly: false, showWarning: false };
+
 const contentEl      = document.getElementById('content');
 const mainFrameCheck = document.getElementById('mainFrameOnly');
+const warningCheck   = document.getElementById('showWarning');
 const clearBtn       = document.getElementById('clearBtn');
 
 // ---------------------------------------------------------------------------
@@ -83,19 +86,27 @@ browserAPI.storage.local.get({ [ALERT_KEY]: [] }, result => {
   renderAlerts(result[ALERT_KEY]);
 });
 
-browserAPI.storage.sync.get({ [CONFIG_KEY]: { mainFrameOnly: false } }, result => {
-  mainFrameCheck.checked = result[CONFIG_KEY].mainFrameOnly;
+browserAPI.storage.sync.get({ [CONFIG_KEY]: DEFAULT_CONFIG }, result => {
+  const cfg = { ...DEFAULT_CONFIG, ...result[CONFIG_KEY] };
+  mainFrameCheck.checked = cfg.mainFrameOnly;
+  warningCheck.checked   = cfg.showWarning;
 });
 
 // ---------------------------------------------------------------------------
-// Config toggle
+// Config toggles — always save the complete config object together
 // ---------------------------------------------------------------------------
 
-mainFrameCheck.addEventListener('change', () => {
+function saveConfig() {
   browserAPI.storage.sync.set({
-    [CONFIG_KEY]: { mainFrameOnly: mainFrameCheck.checked },
+    [CONFIG_KEY]: {
+      mainFrameOnly: mainFrameCheck.checked,
+      showWarning:   warningCheck.checked,
+    },
   });
-});
+}
+
+mainFrameCheck.addEventListener('change', saveConfig);
+warningCheck.addEventListener('change', saveConfig);
 
 // ---------------------------------------------------------------------------
 // Clear button
